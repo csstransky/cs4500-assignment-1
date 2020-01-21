@@ -66,14 +66,14 @@ void add_file_line_to_word_list(size_t print_length, StrList* word_list, char* f
     add_string_to_word_list(print_length, word_list, temp_string);
 }
 
-void print_file(size_t print_length, char* file_name, StrList* word_list) {
+void print_file(size_t print_length, char* file_path, StrList* word_list) {
     // We will only print from a file if the user actually specifies a file with the "-f" flag.
-    if (file_name) {
+    if (file_path) {
         std::ifstream in_file;
-        in_file.open(file_name);
+        in_file.open(file_path);
         if (in_file.is_open()) {
             // Worst case scenario, our buffer needs to hold the entire size of the file
-            char* file_line_string = new char[file_size(file_name)];
+            char* file_line_string = new char[file_size(file_path)];
             while(!in_file.eof()) {
                 in_file >> file_line_string; // buffer magic assigns file_line_string to next file line
                 add_file_line_to_word_list(print_length, word_list, file_line_string);
@@ -87,22 +87,26 @@ void print_file(size_t print_length, char* file_name, StrList* word_list) {
     word_list->print_occurences();
 }
 
-bool is_valid_flag(const char* flag, int argh, char** argv, size_t ii, char* flag_string) {
-    return !flag_string && is_same_string(argv[ii], flag) && ii + 1 < argh;
+bool is_valid_flag(const char* flag, char* flag_string, int argh, char** argv, size_t ii, size_t args_next) {
+    return !flag_string && is_same_string(argv[ii], flag) && ii + args_next < argh;
 }
 
-bool is_valid_flag(const char* flag, int argh, char** argv, size_t ii, size_t flag_size_t) {
-    return flag_size_t == DEFAULT_PRINT_LENGTH && is_same_string(argv[ii], flag) && ii + 1 < argh;
+bool is_valid_flag(const char* flag, size_t flag_size_t, int argh, char** argv, size_t ii, size_t args_next) {
+    return flag_size_t == SIZE_MAX && is_same_string(argv[ii], flag) && ii + args_next < argh;
 }
 
-size_t get_print_length(const char* next_arg) {
+bool is_valid_flag(const char* flag, size_t flag_size_t, size_t default_value, int argh, char** argv, size_t ii, size_t args_next) {
+    return flag_size_t == default_value && is_same_string(argv[ii], flag) && ii + args_next < argh;
+}
+
+size_t get_size_t_from_next_arg(const char* next_arg) {
     // Since checks for print_length rely that they're greater than 0 (we need to read at least
     // 1 character in a word), anything input that's 0 or below will be set to 1 to avoid seg faults
     char first_letter_of_next_arg = next_arg[0];
-    if (first_letter_of_next_arg == '-' || is_same_string(next_arg, "0")) {
-        next_arg = "1";
+    if (first_letter_of_next_arg == '-') {
+        next_arg = "0";
     }
-    return atoi(next_arg);
+    return atoll(next_arg);
 }
 
 void remove_print_length_strings(size_t print_length, StrList* word_list) {
@@ -118,32 +122,67 @@ void remove_print_length_strings(size_t print_length, StrList* word_list) {
 }
 
 int main(int argh, char** argv) {
-    size_t print_length = DEFAULT_PRINT_LENGTH; 
-    char* file_name = nullptr;
-    StrList* word_list = new StrList();
+    char* file_path = nullptr;
+    size_t from = 0;
+    size_t len = SIZE_MAX;
+    // I am making a very, VERY large assumption that a file will not have more than or equal to the
+    // number of elements of SIZE_MAX. SIZE_MAX is my -1, or a way to check if the user used a flag.
+    size_t print_col_type_index = SIZE_MAX;
+    size_t print_col_index_x = SIZE_MAX;
+    size_t print_col_index_y = SIZE_MAX;
+    size_t is_missing_index_x = SIZE_MAX;
+    size_t is_missing_index_y = SIZE_MAX;
     // I want to ignore first argument ("./a.out") as it's the command itself, so I start at 1
-    for (size_t ii = 1; ii < argh; ii++) {
+    for (int ii = 1; ii < argh; ii++) {
+        // TODO: I can't find a way to use switch cases here with char*, try again in the future
+
         // The argument right next to a flag is considered its value, so it's skipped with ii++
         // This means that "-i -f" and "-f -i" will be considered valid, but give strange output
         // NOTE: Will only use the first instance of a flag. "-i 5 -i 6" will make print_length = 5.
-        if (is_valid_flag("-i", argh, argv, ii, print_length)) {
-            print_length = get_print_length(argv[ii + 1]);
-            ii++;
-        }
-        else if (is_valid_flag("-f", argh, argv, ii, file_name)) {
-            file_name = argv[ii + 1];
+        if (is_valid_flag("-f", file_path, argh, argv, ii, 1)) {
+            file_path = argv[ii + 1];
             ii++;
         } 
+        else if (is_valid_flag("-from", from, 0, argh, argv, ii, 1)) {
+            from = get_size_t_from_next_arg(argv[ii + 1]);
+            ii++;
+        }
+        else if (is_valid_flag("-len", len, argh, argv, ii, 1)) {
+            len = get_size_t_from_next_arg(argv[ii + 1]);
+            ii++;
+        }
+        else if (is_valid_flag("-print_col_type", print_col_type_index, argh, argv, ii, 1)) {
+            print_col_type_index = get_size_t_from_next_arg(argv[ii + 1]);
+            ii++;
+        }
+        else if (is_valid_flag("-print_col_idx", print_col_index_x, argh, argv, ii, 2)) {
+            print_col_index_x = get_size_t_from_next_arg(argv[ii + 1]);
+            print_col_index_y = get_size_t_from_next_arg(argv[ii + 2]);
+            ii += 2;
+        } 
+        else if (is_valid_flag("-is_missing_idx", is_missing_index_x, argh, argv, ii, 2)) {
+            is_missing_index_x = get_size_t_from_next_arg(argv[ii + 1]);
+            is_missing_index_y = get_size_t_from_next_arg(argv[ii + 2]);
+            ii += 2;
+        }
         else {
-            // I decided to include any other input into the command as a word to be evaluated,
-            // ex "./a.out -i 5 what the ducky" will output "ducky 1"
-            word_list->push_back(new String(argv[ii]));
+            // TODO: Do something, I don't know
         }
     }
-    // Now that we have the print_length for certain, we have to go and remove anything that isn't long enough
-    // This is mainly for stuff like "./a.out -f doc.txt here is some texty", which should only include "texty"
-    if (word_list->size() > 0) {
-        remove_print_length_strings(print_length, word_list);
-    }
-    print_file(print_length, file_name, word_list);
+    Cout* c = new Cout();
+    if (file_path) { c->p("-f: \"")->p(file_path)->pln("\""); }
+    if (from != 0) { c->p("-from: \"")->p(from)->pln("\""); }
+    if (len != SIZE_MAX) { c->p("-len: \"")->p(len)->pln("\""); }
+    if (print_col_type_index != SIZE_MAX) { c->p("-print_col_type: \"")->p(print_col_type_index)->pln("\""); }
+    if (print_col_index_x != SIZE_MAX && print_col_index_y != SIZE_MAX) 
+        c->p("-print_col_idx: \"")->p(print_col_index_x)->p("\", \"")->p(print_col_index_y)->pln("\"");
+    if (is_missing_index_x != SIZE_MAX && is_missing_index_y != SIZE_MAX) 
+        c->p("-is_missing_idx: \"")->p(is_missing_index_x)->p("\", \"")->p(is_missing_index_y)->pln("\"");
+
+    // // Now that we have the print_length for certain, we have to go and remove anything that isn't long enough
+    // // This is mainly for stuff like "./a.out -f doc.txt here is some texty", which should only include "texty"
+    // if (word_list->size() > 0) {
+    //     remove_print_length_strings(print_length, word_list);
+    // }
+    // print_file(print_length, file_path, word_list);
 }
