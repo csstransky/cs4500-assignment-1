@@ -10,9 +10,8 @@ Spring 2020
 #include "string.h"  // Your file with the String class
 #include "list.h"    // Your file with the two list classes
 
-// The assignment wants the default behavior to grab only words of length greater than 4, so 5 it is
-size_t DEFAULT_PRINT_LENGTH = 5;
-
+// ===================================================================================================
+// TODO: I use this for cheap debugging crap, make sure to actually get rid of this later
 void p(char s) { std::cout << s ; }
 void p(char* s) { std::cout << s ; }
 void p(const char* s) { std::cout << s ; }
@@ -23,11 +22,8 @@ void pln(char* s) { std::cout << s << "\n" ; }
 void pln(const char* s) { std::cout << s << "\n" ; }
 void pln(size_t s) { std::cout << s << "\n" ; }
 void pln(bool s) { std::cout << s << "\n" ; }
-
-
-bool is_same_string(const char* string1, const char* string2) {
-    return strcmp(string1, string2) == 0;
-}
+void pln(std::string s) { std::cout << s << "\n" ; }
+// ====================================================================================================
 
 size_t file_size(char* path) {
     FILE* file = fopen(path, "rb");
@@ -37,87 +33,115 @@ size_t file_size(char* path) {
     return file_size;
 }
 
-void add_string_to_word_list(size_t print_length, StrList* word_list, String* string) {
-    // NOTE: This is mainly used as a helper function
-    // We will either use the string for the word list, or delete it
-    if (string->size() >= print_length) {
-        word_list->push_back(string);
-    }
-    else {
-        delete string;
-    }
+bool is_same_string(const char* string1, const char* string2) {
+    return strcmp(string1, string2) == 0;
 }
 
-void add_file_line_to_word_list(size_t print_length, StrList* word_list, char* file_line_string) {
-    // NOTE: This is mainly used as a helper function
-    String* temp_string = new String();
-    for(size_t ii = 0; ii < strlen(file_line_string); ii++) {
-        if (isalpha(file_line_string[ii])) {
-            char lower_case_file_char = tolower(file_line_string[ii]);
-            temp_string->concat_char(lower_case_file_char);
-        } 
-        // It's possible to get an output with words seperated by symbols, so this 'if' will
-        // correctly seperate them, ex. "'tis!--whose": We want that to be "tis", "whose".
-        else if (temp_string->size() > 0) {
-            add_string_to_word_list(print_length, word_list, temp_string);
-            temp_string = new String();
-        }
-    }
-    add_string_to_word_list(print_length, word_list, temp_string);
-}
-
-void print_file(size_t print_length, char* file_path, StrList* word_list) {
-    // We will only print from a file if the user actually specifies a file with the "-f" flag.
-    if (file_path) {
-        std::ifstream in_file;
-        in_file.open(file_path);
-        if (in_file.is_open()) {
-            // Worst case scenario, our buffer needs to hold the entire size of the file
-            char* file_line_string = new char[file_size(file_path)];
-            while(!in_file.eof()) {
-                in_file >> file_line_string; // buffer magic assigns file_line_string to next file line
-                add_file_line_to_word_list(print_length, word_list, file_line_string);
-            }
-            in_file.close(); 
-        }
-        else {
-            pln("~ERROR: FILE NOT FOUND~");
-        }
-    } 
-    word_list->print_occurences();
-}
-
-bool is_valid_flag(const char* flag, char* flag_string, int argh, char** argv, size_t ii, size_t args_next) {
+bool is_valid_flag(const char* flag, char* flag_string, int argh, char** argv, size_t ii, 
+                    size_t args_next) {
     return !flag_string && is_same_string(argv[ii], flag) && ii + args_next < argh;
 }
 
-bool is_valid_flag(const char* flag, size_t flag_size_t, int argh, char** argv, size_t ii, size_t args_next) {
+bool is_valid_flag(const char* flag, size_t flag_size_t, int argh, char** argv, size_t ii, 
+                    size_t args_next) {
     return flag_size_t == SIZE_MAX && is_same_string(argv[ii], flag) && ii + args_next < argh;
 }
 
-bool is_valid_flag(const char* flag, size_t flag_size_t, size_t default_value, int argh, char** argv, size_t ii, size_t args_next) {
+bool is_valid_flag(const char* flag, size_t flag_size_t, size_t default_value, int argh, 
+                    char** argv, size_t ii, size_t args_next) {
     return flag_size_t == default_value && is_same_string(argv[ii], flag) && ii + args_next < argh;
 }
 
 size_t get_size_t_from_next_arg(const char* next_arg) {
-    // Since checks for print_length rely that they're greater than 0 (we need to read at least
-    // 1 character in a word), anything input that's 0 or below will be set to 1 to avoid seg faults
+    // Since our arguments are unsigned ints, negative numbers aren't allowed, but if we don't 
+    // handle them, it underflows into a super large number, so I handle it correctly here
     char first_letter_of_next_arg = next_arg[0];
     if (first_letter_of_next_arg == '-') {
         next_arg = "0";
     }
+    // Since there's no real C++ way to convert string to size_t, I'm hoping converting to a 
+    // long, long int will do the job as it's much larger than a size_t (this is probably overkill)
     return atoll(next_arg);
 }
 
-void remove_print_length_strings(size_t print_length, StrList* word_list) {
-    for(size_t ii = 0; ii < word_list->size(); ii++) {
-        if(word_list->get(ii)->size_ < print_length) {
-            String* removed_string = word_list->remove(ii);
-            delete removed_string;
-            // I decrement ii to keep the index with the new array after having an element removed 
-            // This mainly stops "skips" from happening. I could go reverse as well.
-            ii--;
+void print_console(char* file_path, size_t from, size_t len, size_t print_col_type_index, 
+                    size_t print_col_index_x, size_t print_col_index_y,
+                    size_t is_missing_index_x, size_t is_missing_index_y) {
+    // Correctly set up all values
+    if (file_path) {
+        // 1. Build the data structure using "from" and "len"
+        std::ifstream in_file;
+        in_file.open(file_path);
+        if (in_file.is_open()) {
+            // Worst case scenario, our buffer needs to hold the entire size of the file
+            // char* file_line_string = new char[file_size(file_path)];
+            std::string file_line_string;
+            char file_char;
+            bool is_record = false;
+            bool is_quotes = false;
+            while(!in_file.eof()) {
+                // in_file >> file_line_string; // buffer magic assigns file_line_string to next file line
+                // pln(file_line_string);
+                in_file >> std::noskipws >> file_char;
+                switch (file_char) {
+                    case ' ':
+                        if (is_quotes && is_record) {
+                            file_line_string += file_char;
+                        }
+                        break;
+                    case '\n':
+                        pln("I AM A NEW LINE, HERE I AM.");
+                        // TODO: This is how we'll know when to move to the next row in col
+                        break;
+                    case '\"':
+                        if (is_record) {
+                            is_quotes = !is_quotes;
+                            file_line_string += file_char;
+                        }
+                        break;
+                    case '<':
+                        is_record = true;
+                        break;
+                    case '>':
+                        // I put this check here to make sure we have a pair of <>, to avoid the 
+                        // case of "> dude >", which in our case will completely ignore it
+                        if (is_record) {
+                            is_record = false;
+                            pln(file_line_string);
+                            file_line_string.clear();
+                            // TODO: input the string into the thing
+                        }
+                        is_quotes = false;
+                        break;
+                    default:
+                        if (is_record) {
+                            file_line_string += file_char;
+                        }
+                }
+            }
+            in_file.close(); 
         }
+        else {
+            Cout* c = new Cout();
+            c->pln("~ERROR: FILE NOT FOUND~");
+            delete c;
+        }
+
+        // 2. print column type option
+        // 3. print column index element
+        // 4. print if element is missing
+        if (print_col_type_index != SIZE_MAX) {
+            // TODO: use the column function to print this
+        }
+        else if (print_col_index_x != SIZE_MAX && print_col_index_y != SIZE_MAX) {
+            // TODO: use the column function to print this
+        }
+        else if (is_missing_index_x != SIZE_MAX && is_missing_index_y != SIZE_MAX) {
+            // TODO: use the column function to print this
+        }
+    }
+    else {
+        // TODO: maybe a message here that you didn't input anything?
     }
 }
 
@@ -132,13 +156,12 @@ int main(int argh, char** argv) {
     size_t print_col_index_y = SIZE_MAX;
     size_t is_missing_index_x = SIZE_MAX;
     size_t is_missing_index_y = SIZE_MAX;
+    // TODO: Turn the entire thing into a tuple? It might be cool, it's how I usually do it
     // I want to ignore first argument ("./a.out") as it's the command itself, so I start at 1
     for (int ii = 1; ii < argh; ii++) {
-        // TODO: I can't find a way to use switch cases here with char*, try again in the future
-
         // The argument right next to a flag is considered its value, so it's skipped with ii++
-        // This means that "-i -f" and "-f -i" will be considered valid, but give strange output
-        // NOTE: Will only use the first instance of a flag. "-i 5 -i 6" will make print_length = 5.
+        // This means that "-len -f" and "-f -len" will be considered valid, but give strange output
+        // NOTE: Will only use the first instance of a flag. "-from 5 -from 6" will make from = 5.
         if (is_valid_flag("-f", file_path, argh, argv, ii, 1)) {
             file_path = argv[ii + 1];
             ii++;
@@ -166,9 +189,10 @@ int main(int argh, char** argv) {
             ii += 2;
         }
         else {
-            // TODO: Do something, I don't know
+            // Currently, we're deciding to ignore everything that isn't one of our argument flags.
         }
     }
+    // TODO: Make sure to get rid of all this later =====================================================
     Cout* c = new Cout();
     if (file_path) { c->p("-f: \"")->p(file_path)->pln("\""); }
     if (from != 0) { c->p("-from: \"")->p(from)->pln("\""); }
@@ -178,11 +202,7 @@ int main(int argh, char** argv) {
         c->p("-print_col_idx: \"")->p(print_col_index_x)->p("\", \"")->p(print_col_index_y)->pln("\"");
     if (is_missing_index_x != SIZE_MAX && is_missing_index_y != SIZE_MAX) 
         c->p("-is_missing_idx: \"")->p(is_missing_index_x)->p("\", \"")->p(is_missing_index_y)->pln("\"");
+    // ==================================================================================================
 
-    // // Now that we have the print_length for certain, we have to go and remove anything that isn't long enough
-    // // This is mainly for stuff like "./a.out -f doc.txt here is some texty", which should only include "texty"
-    // if (word_list->size() > 0) {
-    //     remove_print_length_strings(print_length, word_list);
-    // }
-    // print_file(print_length, file_path, word_list);
+    print_console(file_path, from, len, print_col_type_index, print_col_index_x, print_col_index_y, is_missing_index_x, is_missing_index_y);
 }
