@@ -150,5 +150,26 @@ int main(int argh, char** argv) {
         c->p("-is_missing_idx: \"")->p(is_missing_index_x)->p("\", \"")->p(is_missing_index_y)->pln("\"");
     // ==================================================================================================
 
+
+    cout << "TESTING!!!\n";
+    cout << is_file_boolean("0") << '\n';
+    cout << is_file_boolean("1") << '\n';
+    cout << is_file_boolean("2") << '\n';
+    cout << '\n';
+    cout << is_file_float("hi") << '\n';
+    cout << is_file_float("123") << '\n';
+    cout << is_file_float("12.2") << '\n';
+    cout << is_file_float("1.1.") << '\n';
+    cout << '\n';
+    cout << is_file_int("123") << '\n';
+    cout << is_file_int("1.2") << '\n';
+    cout << is_file_int("1 ") << '\n';
+    cout << '\n';
+    cout << is_file_string(" ") << '\n';
+    cout << is_file_string("") << '\n';
+    cout << is_file_string(" dude") << '\n';
+    cout << is_file_string("dude\" de lol \"") << '\n';
+
+
     print_console(file_path, from, len, print_col_type_index, print_col_index_x, print_col_index_y, is_missing_index_x, is_missing_index_y);
 }

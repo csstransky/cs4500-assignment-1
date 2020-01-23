@@ -7,6 +7,7 @@
 
 #include "column.h"
 #include "type.h"
+#include "helper.h"
 
 using namespace std;
 
@@ -19,7 +20,7 @@ class SoR {
         if (t == INTEGER) {
             return new Integer(stoi(s));
         } 
-        else if (t == BOOLEAN) {
+        else if (t == BOOL) {
             bool b;
             istringstream("1") >> b;
             return new Boolean(b);
@@ -100,10 +101,21 @@ class SoR {
     }
 
     enum_type get_column_enum_type(string line_string) {
-        if (line_string.compare("0") || line_string.compare("1")) {
-            return BOOLEAN;
+        if (is_file_boolean(line_string)) {
+            return BOOL;
         } 
-        // TODO: do more stuff
+        else if (is_file_float(line_string)) {
+            return FLOAT;
+        }
+        else if (is_file_int(line_string)) {
+            return INTEGER;
+        }
+        else if (is_file_string(line_string)) {
+            return STRING;
+        }
+        else {
+            return EMPTY;
+        }
     }
 
     vector<enum_type> convert_strings_to_column_types(vector<string> column_strings) {
@@ -117,12 +129,9 @@ class SoR {
 
     vector<enum_type> get_column_types(char* file_path) {
         vector<enum_type> column_types;
-        // 1. Build the data structure using "from" and "len"
         ifstream in_file;
         in_file.open(file_path);
         if (in_file.is_open()) {
-            // Worst case scenario, our buffer needs to hold the entire size of the file
-            // char* file_line_string = new char[file_size(file_path)];
             string file_line_string;
             char file_char;
             bool is_record = false;
@@ -133,8 +142,6 @@ class SoR {
             vector<string> current_column_strings;
             // TODO, put len and from in here correctly
             while(!in_file.eof()) {
-                // in_file >> file_line_string; // buffer magic assigns file_line_string to next file line
-                // pln(file_line_string);
                 in_file >> noskipws >> file_char;
                 switch (file_char) {
                     case ' ':
@@ -143,14 +150,13 @@ class SoR {
                         }
                         break;
                     case '\n':
-                        cout << "I AM A NEW LINE, HERE I AM.\n";
-                        // TODO: This is how we'll know when to move to the next row in col
+                        cout << "=========----------==========\n";
                         if (max_column_size < current_column_size) {
                             cout << "FOUND LARGER: " << current_column_size << '\n';
                             max_column_size = current_column_size;
                             max_column_strings = current_column_strings;
-                            current_column_strings.clear();
                         }
+                        current_column_strings.clear();
                         current_column_size = 0;
                         break;
                     case '\"':
@@ -182,11 +188,11 @@ class SoR {
                 }
             }
             in_file.close(); 
-            cout << "I AM BEGINNING TO PRINT COLUMN TYPES\n";
+            cout << "------------LARGEST COLUMN ELEMENTS------------\n";
             for(size_t ii = 0; ii < max_column_strings.size(); ii++) {
-                cout << max_column_strings.at(ii) << '\n';
+                cout << '\"' << max_column_strings.at(ii) << "\"\n";
             }
-            cout << "PRINTIND GONDE\n";
+            cout << "-----------------------------------------------\n";
             column_types = convert_strings_to_column_types(max_column_strings);
             
         }
@@ -194,6 +200,11 @@ class SoR {
             cout << "~ERROR: FILE NOT FOUND~\n";
         }
         // TODO return thisng 
+        cout << "------------LARGEST ENUM TYPES------------\n";
+        for(size_t ii = 0; ii < column_types.size(); ii++) {
+            print_enum(column_types.at(ii)); 
+        }
+        cout << "------------------------------------------\n";
         return column_types;
     }
 
@@ -209,9 +220,9 @@ class SoR {
         for (int i = 0; i < line.size(); i++) {
             Column<Type>* c = cols.at(i);
             string element = line.at(i);
-            if (c->getType() == BOOLEAN
+            if (c->getType() == BOOL
                 && (element.compare("0") || element.compare("1"))) {
-                c->add(to_type(BOOLEAN, element));
+                c->add(to_type(BOOL, element));
             } 
             else if (c->getType() == FLOAT && element.find(".")) {
                 c->add(to_type(FLOAT, element));

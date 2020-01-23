@@ -1,7 +1,11 @@
-<hello> <12> <false>
+
 <hi> <11> <  true>
-<yellow> < 10> <false>
+<yellow> < 10> <false> <string>
 <truck> <9> < true>
 <vroom> < 172 > 
+
+<hello > <12  > < false   > <  > < dird>
+
 <"quote checl"> <"I guess this'll" work too>
 <> dude > <notlike this>
+

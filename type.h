@@ -5,7 +5,29 @@
 
 using namespace std;
 
-enum enum_type {INTEGER, FLOAT, BOOLEAN, STRING};
+enum enum_type {INTEGER, FLOAT, BOOL, STRING, EMPTY};
+
+void print_enum(enum_type enum_type) {
+    switch (enum_type) {
+        case INTEGER:
+            cout << "INTEGER\n";
+            break;
+        case FLOAT:
+            cout << "FLOAT\n";
+            break;
+        case BOOL:
+            cout << "BOOL\n";
+            break;
+        case STRING:
+            cout << "STRING\n";
+            break;
+        case EMPTY:
+            cout << "EMPTY\n";
+            break;
+        default:
+            cout << "ERROR: UNKNOWN ENUM - " << enum_type << '\n';
+    }
+}
 
 class Type {
     public:
@@ -15,7 +37,6 @@ class Type {
     bool empty() {
         return false;
     }
-    
 };
 
 class Integer : virtual public Type {
