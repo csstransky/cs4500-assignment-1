@@ -9,6 +9,10 @@ using namespace std;
 
 template <class T>
 class Column {
+    private:
+    enum_type col_type;
+    vector<T*> elements;
+
     public:
 
     Column(enum_type type) {
@@ -23,7 +27,7 @@ class Column {
         elements.push_back(s);
     }
 
-    T get(size_t i) {
+    T* get(size_t i) {
         return elements.at(i);
     }
 
@@ -32,16 +36,13 @@ class Column {
     }
 
     bool is_missing(size_t i) {
-        return elements.at(i).empty();
+        return elements.at(i)->empty();
     }
 
     void remove_last() {
         elements.pop_back();
     }
 
-    private:
-    
-    enum_type col_type;
-    vector<T> elements;
+
 
 };

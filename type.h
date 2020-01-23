@@ -7,6 +7,17 @@ using namespace std;
 
 enum enum_type {INTEGER, FLOAT, BOOLEAN, STRING};
 
+class Type {
+    public:
+
+    virtual string to_string();
+
+    bool empty() {
+        return false;
+    }
+    
+};
+
 class Integer : virtual public Type {
     private:
     int val;
@@ -97,15 +108,4 @@ class Empty : public Float, public Integer, public Boolean, public String {
     bool empty() {
         return true;
     }
-};
-
-class Type {
-    public:
-
-    virtual string to_string();
-
-    bool empty() {
-        return false;
-    }
-    
 };

@@ -5,10 +5,9 @@ Spring 2020
  */
 
 #include <fstream>
+#include <string.h>
 #include "helper.h"  // Your file, with any C++ code that you need
-#include "object.h"  // Your file with the CwC declaration of Object
-#include "string.h"  // Your file with the String class
-#include "list.h"    // Your file with the two list classes
+#include "sor.h"
 
 // ===================================================================================================
 // TODO: I use this for cheap debugging crap, make sure to actually get rid of this later
@@ -69,63 +68,10 @@ void print_console(char* file_path, size_t from, size_t len, size_t print_col_ty
                     size_t is_missing_index_x, size_t is_missing_index_y) {
     // Correctly set up all values
     if (file_path) {
-        // 1. Build the data structure using "from" and "len"
-        std::ifstream in_file;
-        in_file.open(file_path);
-        if (in_file.is_open()) {
-            // Worst case scenario, our buffer needs to hold the entire size of the file
-            // char* file_line_string = new char[file_size(file_path)];
-            std::string file_line_string;
-            char file_char;
-            bool is_record = false;
-            bool is_quotes = false;
-            while(!in_file.eof()) {
-                // in_file >> file_line_string; // buffer magic assigns file_line_string to next file line
-                // pln(file_line_string);
-                in_file >> std::noskipws >> file_char;
-                switch (file_char) {
-                    case ' ':
-                        if (is_quotes && is_record) {
-                            file_line_string += file_char;
-                        }
-                        break;
-                    case '\n':
-                        pln("I AM A NEW LINE, HERE I AM.");
-                        // TODO: This is how we'll know when to move to the next row in col
-                        break;
-                    case '\"':
-                        if (is_record) {
-                            is_quotes = !is_quotes;
-                            file_line_string += file_char;
-                        }
-                        break;
-                    case '<':
-                        is_record = true;
-                        break;
-                    case '>':
-                        // I put this check here to make sure we have a pair of <>, to avoid the 
-                        // case of "> dude >", which in our case will completely ignore it
-                        if (is_record) {
-                            is_record = false;
-                            pln(file_line_string);
-                            file_line_string.clear();
-                            // TODO: input the string into the thing
-                        }
-                        is_quotes = false;
-                        break;
-                    default:
-                        if (is_record) {
-                            file_line_string += file_char;
-                        }
-                }
-            }
-            in_file.close(); 
-        }
-        else {
-            Cout* c = new Cout();
-            c->pln("~ERROR: FILE NOT FOUND~");
-            delete c;
-        }
+        
+        // TODO: Make this
+        SoR* sor_struct = new SoR();
+        sor_struct->get_column_types(file_path);
 
         // 2. print column type option
         // 3. print column index element

@@ -2,6 +2,8 @@
 
 #include <vector>
 #include <algorithm>
+#include <fstream>
+#include <iostream>
 
 #include "column.h"
 #include "type.h"
@@ -12,6 +14,7 @@ class SoR {
         private:
     vector<Column<Type>*> cols;
 
+
     Type* to_type(enum_type t, string s) {
         if (t == INTEGER) {
             return new Integer(stoi(s));
@@ -21,7 +24,7 @@ class SoR {
             return new Boolean(b);
         } else if (t == FLOAT) {
             return new Float(stof(s));
-        } else if (s.length > 0) {
+        } else if (s.length() > 0) {
             return new String(s);
         } else {
             return new Empty();
@@ -34,6 +37,139 @@ class SoR {
 
     }
 
+    SoR(char* file_path) {
+        // 1. Build the data structure using "from" and "len"
+        ifstream in_file;
+        in_file.open(file_path);
+        if (in_file.is_open()) {
+            // Worst case scenario, our buffer needs to hold the entire size of the file
+            // char* file_line_string = new char[file_size(file_path)];
+            string file_line_string;
+            char file_char;
+            bool is_record = false;
+            bool is_quotes = false;
+            while(!in_file.eof()) {
+                // in_file >> file_line_string; // buffer magic assigns file_line_string to next file line
+                // pln(file_line_string);
+                in_file >> noskipws >> file_char;
+                switch (file_char) {
+                    case ' ':
+                        if (is_quotes && is_record) {
+                            file_line_string += file_char;
+                        }
+                        break;
+                    case '\n':
+                        cout << "I AM A NEW LINE, HERE I AM.\n";
+                        // TODO: This is how we'll know when to move to the next row in col
+                        break;
+                    case '\"':
+                        if (is_record) {
+                            is_quotes = !is_quotes;
+                            file_line_string += file_char;
+                        }
+                        break;
+                    case '<':
+                        is_record = true;
+                        break;
+                    case '>':
+                        // I put this check here to make sure we have a pair of <>, to avoid the 
+                        // case of "> dude >", which in our case will completely ignore it
+                        if (is_record) {
+                            is_record = false;
+                            cout << file_line_string << '\n';
+                            file_line_string.clear();
+                            // TODO: input the string into the thing
+                        }
+                        is_quotes = false;
+                        break;
+                    default:
+                        if (is_record) {
+                            file_line_string += file_char;
+                        }
+                }
+            }
+            in_file.close(); 
+        }
+        else {
+            cout << "~ERROR: FILE NOT FOUND~\n";
+        }
+    }
+
+    vector<enum_type> get_column_types(char* file_path) {
+        // 1. Build the data structure using "from" and "len"
+        ifstream in_file;
+        in_file.open(file_path);
+        if (in_file.is_open()) {
+            // Worst case scenario, our buffer needs to hold the entire size of the file
+            // char* file_line_string = new char[file_size(file_path)];
+            string file_line_string;
+            char file_char;
+            bool is_record = false;
+            bool is_quotes = false;
+            size_t max_column_size = 0;
+            size_t current_column_size = 0;
+            vector<string> max_column_strings;
+            vector<string> current_column_strings;
+            // TODO, put len and from in here correctly
+            while(!in_file.eof()) {
+                // in_file >> file_line_string; // buffer magic assigns file_line_string to next file line
+                // pln(file_line_string);
+                in_file >> noskipws >> file_char;
+                switch (file_char) {
+                    case ' ':
+                        if (is_quotes && is_record) {
+                            file_line_string += file_char;
+                        }
+                        break;
+                    case '\n':
+                        cout << "I AM A NEW LINE, HERE I AM.\n";
+                        // TODO: This is how we'll know when to move to the next row in col
+                        if (max_column_size < current_column_size) {
+                            max_column_size = current_column_size;
+                            max_column_strings = current_column_strings;
+                            current_column_strings.clear();
+                        }
+                        break;
+                    case '\"':
+                        if (is_record) {
+                            is_quotes = !is_quotes;
+                            file_line_string += file_char;
+                        }
+                        break;
+                    case '<':
+                        is_record = true;
+                        break;
+                    case '>':
+                        // I put this check here to make sure we have a pair of <>, to avoid the 
+                        // case of "> dude >", which in our case will completely ignore it
+                        if (is_record) {
+                            is_record = false;
+                            cout << file_line_string << '\n';
+                            file_line_string.clear();
+
+                            current_column_size++;
+                            current_column_strings.push_back(file_line_string);
+                        }
+                        is_quotes = false;
+                        break;
+                    default:
+                        if (is_record) {
+                            file_line_string += file_char;
+                        }
+                }
+            }
+            in_file.close(); 
+            for(size_t ii = 0; ii < max_column_strings.size(); ii++) {
+                cout << max_column_strings[ii] << '\n';
+            }
+            vector<enum_type> column_types;
+        }
+        else {
+            cout << "~ERROR: FILE NOT FOUND~\n";
+        }
+        // TODO return thisng 
+    }
+
     ~SoR() {
 
     }
@@ -43,41 +179,44 @@ class SoR {
     }
 
     void add_line(vector<string> line) {
-        for (int i = 0; i < line.size; i++) {
+        for (int i = 0; i < line.size(); i++) {
             Column<Type>* c = cols.at(i);
             string element = line.at(i);
             if (c->getType() == BOOLEAN
                 && (element.compare("0") || element.compare("1"))) {
                 c->add(to_type(BOOLEAN, element));
-            } else if (c->getType == FLOAT && element.find(".")) {
+            } else if (c->getType() == FLOAT && element.find(".")) {
                 c->add(to_type(FLOAT, element));
-            } else if (c->getType == INTEGER && all_of(element.begin(), element.end(), ::isdigit)) {
+            } else if (c->getType() == INTEGER && all_of(element.begin(), element.end(), ::isdigit)) {
                 c->add(to_type(INTEGER, element));
-            } else if (c->getType == STRING && all_of(element.begin(), element.end(), ::isalpha)) { // isalpha is not right
+            // TODO: Fix this if bad things happen
+            } else if (c->getType() == STRING) {
                 c->add(to_type(STRING, element));
             } else {
-                // bad element, delete row
-                delete_row(i - 1);
+                // We will treat elements that do not follow their types as Empty elements
+                // Example: Column = <INT>, Element = <"hello">, this will be recorded as <>
+                c->add(new Empty());
             }
         }
     }
 
     void delete_row(int start_col_index) {
+        // NOTE: deletes last row
         for (int i = start_col_index; i >= 0; i--) {
             cols.at(i)->remove_last();
         }
     }
 
     string get(size_t x, size_t y) {
-        return cols.at(y)->get(x).to_string();
+        return cols.at(x)->get(y)->to_string();
     }
 
-    enum_type get_col_type(size_t y) {
-        return cols.at(y)->getType();
+    enum_type get_col_type(size_t x) {
+        return cols.at(x)->getType();
     }
 
     bool is_missing(size_t x, size_t y) {
-        return cols.at(y)->is_missing(x);
+        return cols.at(x)->is_missing(y);
     }
 
 };
