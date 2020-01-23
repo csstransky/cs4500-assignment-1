@@ -18,15 +18,19 @@ class SoR {
     Type* to_type(enum_type t, string s) {
         if (t == INTEGER) {
             return new Integer(stoi(s));
-        } else if (t == BOOLEAN) {
+        } 
+        else if (t == BOOLEAN) {
             bool b;
             istringstream("1") >> b;
             return new Boolean(b);
-        } else if (t == FLOAT) {
+        } 
+        else if (t == FLOAT) {
             return new Float(stof(s));
-        } else if (s.length() > 0) {
+        } 
+        else if (s.length() > 0) {
             return new String(s);
-        } else {
+        } 
+        else {
             return new Empty();
         }
     }
@@ -95,7 +99,24 @@ class SoR {
         }
     }
 
+    enum_type get_column_enum_type(string line_string) {
+        if (line_string.compare("0") || line_string.compare("1")) {
+            return BOOLEAN;
+        } 
+        // TODO: do more stuff
+    }
+
+    vector<enum_type> convert_strings_to_column_types(vector<string> column_strings) {
+        vector<enum_type> column_types;
+        for (size_t ii = 0; ii < column_strings.size(); ii++) {
+            enum_type col_enum = get_column_enum_type(column_strings[ii]);
+            column_types.push_back(col_enum);
+        }
+        return column_types;
+    }
+
     vector<enum_type> get_column_types(char* file_path) {
+        vector<enum_type> column_types;
         // 1. Build the data structure using "from" and "len"
         ifstream in_file;
         in_file.open(file_path);
@@ -125,10 +146,12 @@ class SoR {
                         cout << "I AM A NEW LINE, HERE I AM.\n";
                         // TODO: This is how we'll know when to move to the next row in col
                         if (max_column_size < current_column_size) {
+                            cout << "FOUND LARGER: " << current_column_size << '\n';
                             max_column_size = current_column_size;
                             max_column_strings = current_column_strings;
                             current_column_strings.clear();
                         }
+                        current_column_size = 0;
                         break;
                     case '\"':
                         if (is_record) {
@@ -143,12 +166,12 @@ class SoR {
                         // I put this check here to make sure we have a pair of <>, to avoid the 
                         // case of "> dude >", which in our case will completely ignore it
                         if (is_record) {
-                            is_record = false;
-                            cout << file_line_string << '\n';
-                            file_line_string.clear();
-
                             current_column_size++;
                             current_column_strings.push_back(file_line_string);
+
+                            is_record = false;
+                            cout << file_line_string << '\n';
+                            file_line_string.clear(); 
                         }
                         is_quotes = false;
                         break;
@@ -159,15 +182,19 @@ class SoR {
                 }
             }
             in_file.close(); 
+            cout << "I AM BEGINNING TO PRINT COLUMN TYPES\n";
             for(size_t ii = 0; ii < max_column_strings.size(); ii++) {
-                cout << max_column_strings[ii] << '\n';
+                cout << max_column_strings.at(ii) << '\n';
             }
-            vector<enum_type> column_types;
+            cout << "PRINTIND GONDE\n";
+            column_types = convert_strings_to_column_types(max_column_strings);
+            
         }
         else {
             cout << "~ERROR: FILE NOT FOUND~\n";
         }
         // TODO return thisng 
+        return column_types;
     }
 
     ~SoR() {
@@ -185,14 +212,18 @@ class SoR {
             if (c->getType() == BOOLEAN
                 && (element.compare("0") || element.compare("1"))) {
                 c->add(to_type(BOOLEAN, element));
-            } else if (c->getType() == FLOAT && element.find(".")) {
+            } 
+            else if (c->getType() == FLOAT && element.find(".")) {
                 c->add(to_type(FLOAT, element));
-            } else if (c->getType() == INTEGER && all_of(element.begin(), element.end(), ::isdigit)) {
+            } 
+            else if (c->getType() == INTEGER && all_of(element.begin(), element.end(), ::isdigit)) {
                 c->add(to_type(INTEGER, element));
             // TODO: Fix this if bad things happen
-            } else if (c->getType() == STRING) {
+            } 
+            else if (c->getType() == STRING) {
                 c->add(to_type(STRING, element));
-            } else {
+            } 
+            else {
                 // We will treat elements that do not follow their types as Empty elements
                 // Example: Column = <INT>, Element = <"hello">, this will be recorded as <>
                 c->add(new Empty());
