@@ -53,8 +53,11 @@ class SoR {
                 c->add(to_type(FLOAT, element));
             } else if (c->getType == INTEGER && all_of(element.begin(), element.end(), ::isdigit)) {
                 c->add(to_type(INTEGER, element));
-            } else {
+            } else if (c->getType == STRING && all_of(element.begin(), element.end(), ::isalpha)) { // isalpha is not right
                 c->add(to_type(STRING, element));
+            } else {
+                // bad element, delete row
+                delete_row(i - 1);
             }
         }
     }
