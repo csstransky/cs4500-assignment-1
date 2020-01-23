@@ -7,11 +7,11 @@
 
 using namespace std;
 
-template <class T>
+//template <class T>
 class Column {
     private:
     enum_type col_type;
-    vector<T*> elements;
+    vector<Type*> elements;
 
     public:
 
@@ -23,11 +23,11 @@ class Column {
 
     }
 
-    void add(T* s) {
+    void add(Type* s) {
         elements.push_back(s);
     }
 
-    T* get(size_t i) {
+    Type* get(size_t i) {
         return elements.at(i);
     }
 

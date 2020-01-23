@@ -5,7 +5,7 @@
 
 using namespace std;
 
-enum enum_type {INTEGER, FLOAT, BOOLEAN, STRING};
+enum enum_type {INTEGER, FLOAT, BOOLEAN, STRING, EMPTY};
 
 class Type {
     public:

@@ -11,8 +11,8 @@
 using namespace std;
 
 class SoR {
-        private:
-    vector<Column<Type>*> cols;
+    private:
+    vector<Column*> cols;
 
 
     Type* to_type(enum_type t, string s) {
@@ -35,24 +35,57 @@ class SoR {
         }
     }
 
-    public:
+    void construct_columns(vector<enum_type> cols_types) {
+        for (int i = 0; i < cols_types.size(); i++) {
+            Column* c;
+            enum_type col_type = cols_types.at(i);
+            if (col_type == BOOLEAN) {
+                c = new Column(BOOLEAN);
+            }
+            else if (col_type == FLOAT) {
+                c = new Column(FLOAT);
+            } 
+            else if (col_type == INTEGER) {
+                c = new Column(INTEGER);
+            } 
+            else if (col_type == STRING) {
+                c = new Column(STRING);
+            } else {
+                c = new Column(EMPTY);
+            }
 
-    SoR() {
-
+            cols.push_back(c);
+        }
     }
 
-    SoR(char* file_path) {
+    void parse_and_add(char* file_path, size_t from, size_t len) {
         // 1. Build the data structure using "from" and "len"
         ifstream in_file;
         in_file.open(file_path);
         if (in_file.is_open()) {
             // Worst case scenario, our buffer needs to hold the entire size of the file
             // char* file_line_string = new char[file_size(file_path)];
+
             string file_line_string;
             char file_char;
             bool is_record = false;
             bool is_quotes = false;
-            while(!in_file.eof()) {
+            size_t end_byte = from + len;
+            vector<string> current_line;
+
+
+            // move to from position
+            in_file.seekg(from, ios_base::beg);
+
+            // move until new line
+            while(!in_file.eof() && end_byte > in_file.tellg()) {
+                in_file >> noskipws >> file_char;
+                if (file_char == '\n') {
+                    break;
+                }
+            }
+            
+            while(!in_file.eof() && end_byte > in_file.tellg()) {
                 // in_file >> file_line_string; // buffer magic assigns file_line_string to next file line
                 // pln(file_line_string);
                 in_file >> noskipws >> file_char;
@@ -64,7 +97,8 @@ class SoR {
                         break;
                     case '\n':
                         cout << "I AM A NEW LINE, HERE I AM.\n";
-                        // TODO: This is how we'll know when to move to the next row in col
+                        add_line(current_line);
+                        current_line.clear();
                         break;
                     case '\"':
                         if (is_record) {
@@ -81,6 +115,7 @@ class SoR {
                         if (is_record) {
                             is_record = false;
                             cout << file_line_string << '\n';
+                            current_line.push_back(file_line_string);
                             file_line_string.clear();
                             // TODO: input the string into the thing
                         }
@@ -99,6 +134,23 @@ class SoR {
         }
     }
 
+    public:
+
+    SoR() {
+
+    }
+
+    SoR(char* file_path, size_t from, size_t len) {
+        // get column types of the first 500 lines (using max column)
+        vector<enum_type> cols_types = get_column_types(file_path, from, len);
+
+        // construct and add each column to cols
+        construct_columns(cols_types);
+
+        // parse again to add each element
+        parse_and_add(file_path, from, len);
+    }
+
     enum_type get_column_enum_type(string line_string) {
         if (line_string.compare("0") || line_string.compare("1")) {
             return BOOLEAN;
@@ -115,7 +167,7 @@ class SoR {
         return column_types;
     }
 
-    vector<enum_type> get_column_types(char* file_path) {
+    vector<enum_type> get_column_types(char* file_path, size_t from , size_t len) {
         vector<enum_type> column_types;
         // 1. Build the data structure using "from" and "len"
         ifstream in_file;
@@ -131,8 +183,21 @@ class SoR {
             size_t current_column_size = 0;
             vector<string> max_column_strings;
             vector<string> current_column_strings;
-            // TODO, put len and from in here correctly
-            while(!in_file.eof()) {
+            size_t end_byte = from + len;
+                        
+            // move to from position
+            in_file.seekg(from, ios_base::beg);
+
+            // move until new line
+            while(!in_file.eof() && end_byte > in_file.tellg()) {
+                in_file >> noskipws >> file_char;
+                if (file_char == '\n') {
+                    break;
+                }
+            }
+
+
+            while(!in_file.eof() && end_byte > in_file.tellg()) {
                 // in_file >> file_line_string; // buffer magic assigns file_line_string to next file line
                 // pln(file_line_string);
                 in_file >> noskipws >> file_char;
@@ -201,13 +266,13 @@ class SoR {
 
     }
 
-    void add_col(Column<Type>* col) {
+    void add_col(Column* col) {
         cols.push_back(col);
     }
 
     void add_line(vector<string> line) {
         for (int i = 0; i < line.size(); i++) {
-            Column<Type>* c = cols.at(i);
+            Column* c = cols.at(i);
             string element = line.at(i);
             if (c->getType() == BOOLEAN
                 && (element.compare("0") || element.compare("1"))) {
