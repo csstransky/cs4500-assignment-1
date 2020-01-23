@@ -3,14 +3,15 @@
 #include <string>
 #include <vector>
 
-enum Type {BOOL, INTEGER, FLOAT, STRING};
+#include "type.h"
 
 using namespace std;
 
+template <class T>
 class Column {
     public:
 
-    Column(Type type) {
+    Column(enum_type type) {
         col_type = type;
     }
 
@@ -18,15 +19,15 @@ class Column {
 
     }
 
-    void add(string s) {
+    void add(T* s) {
         elements.push_back(s);
     }
 
-    string get(size_t i) {
+    T get(size_t i) {
         return elements.at(i);
     }
 
-    Type getType() {
+    enum_type getType() {
         return col_type;
     }
 
@@ -40,7 +41,7 @@ class Column {
 
     private:
     
-    Type col_type;
-    vector<string> elements;
+    enum_type col_type;
+    vector<T> elements;
 
 };
