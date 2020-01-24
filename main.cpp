@@ -13,10 +13,14 @@ using namespace std;
 
 size_t get_file_size(char* path) {
     FILE* file = fopen(path, "rb");
-    fseek(file, 0L, SEEK_END); // goes to the end of the file
-    size_t file_size = ftell(file); // gets the size
-    fclose(file); 
+    size_t file_size = 0;
+    if (file) {
+        fseek(file, 0L, SEEK_END); // goes to the end of the file
+        file_size = ftell(file); // gets the size
+        fclose(file); 
+    }
     return file_size;
+
 }
 
 bool is_same_string(const char* string1, const char* string2) {
@@ -36,6 +40,14 @@ bool is_valid_flag(const char* flag, size_t flag_size_t, int argh, char** argv, 
 bool is_valid_flag(const char* flag, size_t flag_size_t, size_t default_value, int argh, 
                     char** argv, size_t ii, size_t args_next) {
     return flag_size_t == default_value && is_same_string(argv[ii], flag) && ii + args_next < argh;
+}
+
+bool is_file_exists(char* file_path) {
+    ifstream in_file;
+    in_file.open(file_path);
+    bool is_file_exists = in_file.is_open();
+    in_file.close();
+    return is_file_exists;
 }
 
 size_t get_size_t_from_next_arg(const char* next_arg) {
@@ -73,7 +85,13 @@ void print_is_missing_element(SoR* sor_struct, size_t is_missing_index_x, size_t
 void print_console(char* file_path, size_t from, size_t len, size_t print_col_type_index, 
                     size_t print_col_index_x, size_t print_col_index_y,
                     size_t is_missing_index_x, size_t is_missing_index_y) {
+    // I first check if there even is a valid "-f" field
     if (file_path) {
+        if (!is_file_exists(file_path)) {
+            cout << "~ERROR: FILE NOT FOUND~\n";
+            return;
+        }
+
         size_t file_size = get_file_size(file_path);
         from = min(from, file_size);
         len = min(len, file_size);
@@ -92,7 +110,7 @@ void print_console(char* file_path, size_t from, size_t len, size_t print_col_ty
     }
     else {
         cout << "No File Entered. Enter a file with: \n"
-            << "./a.out -f <file_name>.txt\n";
+            << "./a.out -f <file_name>\n";
     }
 }
 

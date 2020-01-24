@@ -154,11 +154,11 @@ class SoR {
                 }
             }
             column_types = convert_strings_to_column_types(max_column_strings);
+            in_file.close(); 
         }
         else {
             cout << "~ERROR: FILE NOT FOUND~\n";
         }
-        in_file.close(); 
         return column_types;
     }
 
@@ -269,11 +269,11 @@ class SoR {
                         }
                 }
             }
+            in_file.close(); 
         }
         else {
             cout << "~ERROR: FILE NOT FOUND~\n";
         }
-        in_file.close(); 
     }
 
     public:
