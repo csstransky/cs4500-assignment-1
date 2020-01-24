@@ -1,25 +1,28 @@
 comp:
-	clang++ -std=c++11 -Wall -g main.cpp -v
+	clang++ -std=c++11 -Wall -g -o sorer main.cpp -v
 
 run:
-	./a.out
+	./sorer
 
 clean:
-	rm -rf a.out* *~
+	rm -rf sorer* *~
 
 test:
-	./a.out
-	./a.out -i 0 -f doc.txt
-	./a.out -i 1000 -f doc.txt
-	./a.out -i -1 -f doc.txt
-	./a.out -f nofound.txt
-	./a.out -i 5 what the ducky
-	./a.out doc.txt
-	./a.out -f doc.txt along with some other text
-	./a.out here her e her her -f doc.txt lol
-	./a.out -f doc.txt
-	# Entire Alice in Wonderland book test
-	# ./a.out -f alice29.txt 
+	./sorer 
+	./sorer -f doc.txt
+	./sorer -f "doc.txt"
+	./sorer -f doc.txt -from 10
+	./sorer -f doc.txt -from 10 -len 100
+	./sorer -f doc.txt -from 10 -len 100 -print_col_type 0
+	./sorer -f doc.txt -from 30 -print_col_idx 0 1
+	./sorer -f doc.txt -from 2 -len 200 -is_missing_idx 2 2
+	-./sorer -f doc.txt -is_missing_idx 0
+	-./sorer -f nofound
+	-./sorer -from 2 what the ducky
+	-./sorer doc.txt
+	-./sorer -f doc.txt along with some other text
+	-./sorer here her e her her -f doc.txt lol
+	-./sorer -is_missing_idx ajd 2
 
 docker:
-	g++ -Wall -std=c++11 main.cpp
+	g++ -O3 -Wall -std=c++11 -o sorer main.cpp 
