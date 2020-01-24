@@ -8,7 +8,7 @@ clean:
 	rm -rf a.out* *~
 
 test:
-	./a.out
+	./a.out 
 	./a.out -i 0 -f doc.txt
 	./a.out -i 1000 -f doc.txt
 	./a.out -i -1 -f doc.txt

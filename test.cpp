@@ -9,8 +9,6 @@ Spring 2020
 #include "helper.h"  // Your file, with any C++ code that you need
 #include "sor.h"
 
-using namespace std;
-
 size_t get_file_size(char* path) {
     FILE* file = fopen(path, "rb");
     fseek(file, 0L, SEEK_END); // goes to the end of the file
@@ -50,49 +48,45 @@ size_t get_size_t_from_next_arg(const char* next_arg) {
     return atoll(next_arg);
 }
 
-void print_column_type(SoR* sor_struct, size_t print_col_type_index) {
-    print_col_type_index = min(print_col_type_index, sor_struct->get_column_size() - 1);
-    enum_type column_type = sor_struct->get_col_type(print_col_type_index);
-    cout << "Column Type at " << print_col_type_index << ": " << get_enum_string(column_type) << '\n';
-}
-
-void print_column_element(SoR* sor_struct, size_t print_col_index_x, size_t print_col_index_y) {
-    print_col_index_x = min(print_col_index_x, sor_struct->get_column_size() - 1);
-    print_col_index_y = min(print_col_index_y, sor_struct->get_row_size() - 1);
-    string element = sor_struct->get(print_col_index_x, print_col_index_y);
-    cout << "Element at " << print_col_index_x << ", " << print_col_index_y << ": " << element << '\n';
-}
-
-void print_is_missing_element(SoR* sor_struct, size_t is_missing_index_x, size_t is_missing_index_y) {
-    is_missing_index_x = min(is_missing_index_x, sor_struct->get_column_size() - 1);
-    is_missing_index_y = min(is_missing_index_y, sor_struct->get_row_size() - 1);
-    bool is_missing = sor_struct->is_missing(is_missing_index_x, is_missing_index_y);
-    cout << "Is element missing at " << is_missing_index_x << ", " << is_missing_index_y << ": " << is_missing << '\n';
-}
-
 void print_console(char* file_path, size_t from, size_t len, size_t print_col_type_index, 
                     size_t print_col_index_x, size_t print_col_index_y,
                     size_t is_missing_index_x, size_t is_missing_index_y) {
+    // Correctly set up all values
     if (file_path) {
         size_t file_size = get_file_size(file_path);
-        from = min(from, file_size);
-        len = min(len, file_size);
+        if (from > file_size) {
+            from = file_size;
+        }
+        if (len > file_size) {
+            len = file_size;
+        }
 
         SoR* sor_struct = new SoR(file_path, from, len);
+        sor_struct->print();
+        cout << "------------\n";
+        // sor_struct->get_column_types(file_path, from, len);
 
+        // 2. print column type option
+        // 3. print column index element
+        // 4. print if element is missing
         if (print_col_type_index != SIZE_MAX) {
-            print_column_type(sor_struct, print_col_type_index);
+            if (print_col_type_index >= sor_struct->get_column_size())  {
+                print_col_type_index = sor_struct->get_column_size() - 1;
+            }
+            enum_type column_type = sor_struct->get_col_type(print_col_type_index);
+            cout << "Column Type at " << print_col_type_index << ": " << get_enum_string(column_type) << '\n';
         }
         if (print_col_index_x != SIZE_MAX && print_col_index_y != SIZE_MAX) {
-            print_column_element(sor_struct, print_col_index_x, print_col_index_y);
+            string element = sor_struct->get(print_col_index_x, print_col_index_y);
+            cout << "Element at " << print_col_index_x << ", " << print_col_index_y << ": " << element << '\n';
         }
         if (is_missing_index_x != SIZE_MAX && is_missing_index_y != SIZE_MAX) {
-            print_is_missing_element(sor_struct, is_missing_index_x, is_missing_index_y);
+            bool is_missing = sor_struct->is_missing(is_missing_index_x, is_missing_index_y);
+            cout << "Is element missing at " << is_missing_index_x << ", " << is_missing_index_y << ": " << is_missing << '\n';
         }
     }
     else {
-        cout << "No File Entered. Enter a file with: \n"
-            << "./a.out -f <file_name>.txt\n";
+        cout << "YOU DID NOT ENTER A FILE.\n";
     }
 }
 
@@ -142,6 +136,27 @@ int main(int argh, char** argv) {
             // Currently, we're deciding to ignore everything that isn't one of our argument flags.
         }
     }
-    print_console(file_path, from, len, print_col_type_index, print_col_index_x, print_col_index_y, 
-                    is_missing_index_x, is_missing_index_y);
+
+
+    cout << "TESTING!!!\n";
+    cout << is_file_boolean("0") << '\n';
+    cout << is_file_boolean("1") << '\n';
+    cout << is_file_boolean("2") << '\n';
+    cout << '\n';
+    cout << is_file_float("hi") << '\n';
+    cout << is_file_float("123") << '\n';
+    cout << is_file_float("12.2") << '\n';
+    cout << is_file_float("1.1.") << '\n';
+    cout << '\n';
+    cout << is_file_int("123") << '\n';
+    cout << is_file_int("1.2") << '\n';
+    cout << is_file_int("1 ") << '\n';
+    cout << '\n';
+    cout << is_file_string(" ") << '\n';
+    cout << is_file_string("") << '\n';
+    cout << is_file_string(" dude") << '\n';
+    cout << is_file_string("dude\" de lol \"") << '\n';
+
+
+    print_console(file_path, from, len, print_col_type_index, print_col_index_x, print_col_index_y, is_missing_index_x, is_missing_index_y);
 }

@@ -31,9 +31,7 @@ class Type {
 
     virtual string to_string() { return ""; }
 
-    bool empty() {
-        return false;
-    }
+    virtual bool empty() { return false; }
 };
 
 class Integer : virtual public Type {

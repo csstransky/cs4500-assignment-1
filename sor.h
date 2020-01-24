@@ -11,11 +11,21 @@
 
 using namespace std;
 
+// Assignment only wants us to read the first 500 lines to find the schema of a file
+size_t MAX_SCHEMA_READ = 500;
+
 class SoR {
     private:
     vector<Column*> cols;
 
     void add_line(vector<string> line) {
+        // NOTE: This function will transform any column_type of EMPTY into the FIRST different 
+        // enum_type it finds, example:
+        // column_types before = <STRING> <EMPTY> <INTEGER>
+        // <dog> <> <12>
+        // <cat> <1>
+        // <dude> <hi> <13>
+        // column_types after = <STRING> <BOOL> <INTEGER>
         int i;
         for (i = 0; i < line.size(); i++) {
             Column* c = cols.at(i);
@@ -80,6 +90,11 @@ class SoR {
     }
 
     vector<enum_type> get_column_types(char* file_path) {
+        // This function determines the column types by the FIRST INSTANCE of the largest column,
+        // example:
+        // <dello> <dog>
+        // <12> <23>
+        // output = <STRING> <STRING>
         vector<enum_type> column_types;
         ifstream in_file;
         in_file.open(file_path);
@@ -94,7 +109,7 @@ class SoR {
             vector<string> current_column_strings;
             int num_lines = 0;
 
-            while(!in_file.eof() && num_lines < 500) {
+            while(!in_file.eof() && num_lines < MAX_SCHEMA_READ) {
                 in_file >> noskipws >> file_char;
                 switch (file_char) {
                     case ' ':
@@ -138,14 +153,12 @@ class SoR {
                         }
                 }
             }
-            in_file.close(); 
             column_types = convert_strings_to_column_types(max_column_strings);
-            
         }
         else {
             cout << "~ERROR: FILE NOT FOUND~\n";
         }
-
+        in_file.close(); 
         return column_types;
     }
 
@@ -206,7 +219,6 @@ class SoR {
             size_t end_byte = from + len;
             vector<string> current_line;
 
-
             // move to from position
             in_file.seekg(from, ios_base::beg);
 
@@ -219,7 +231,7 @@ class SoR {
                     }
                 }
             }
-           
+
             while(!in_file.eof() && end_byte > in_file.tellg()) {
                 in_file >> noskipws >> file_char;
                 switch (file_char) {
@@ -246,10 +258,8 @@ class SoR {
                         // case of "> dude >", which in our case will completely ignore it
                         if (is_record) {
                             is_record = false;
-                            cout << file_line_string << '\n';
                             current_line.push_back(file_line_string);
                             file_line_string.clear();
-                            // TODO: input the string into the thing
                         }
                         is_quotes = false;
                         break;
@@ -259,11 +269,11 @@ class SoR {
                         }
                 }
             }
-            in_file.close(); 
         }
         else {
             cout << "~ERROR: FILE NOT FOUND~\n";
         }
+        in_file.close(); 
     }
 
     public:
