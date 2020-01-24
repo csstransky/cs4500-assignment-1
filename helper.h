@@ -62,7 +62,7 @@ bool is_file_string(std::string line_string) {
   if (line_string.length() <= 0) 
     return false;
 
-  bool is_quotes;
+  bool is_quotes = false;
   for (size_t ii = 0; ii < line_string.length(); ii++) {
     if (line_string[ii] == ' ' && !is_quotes) {
       return false;

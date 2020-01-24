@@ -1,5 +1,5 @@
  /*
-Cristian Stransky  
+Cristian Stransky & Kaylin Devchand
 CS4500 - Software Dev
 Spring 2020
  */
@@ -8,21 +8,6 @@ Spring 2020
 #include <string.h>
 #include "helper.h"  // Your file, with any C++ code that you need
 #include "sor.h"
-
-// ===================================================================================================
-// TODO: I use this for cheap debugging crap, make sure to actually get rid of this later
-void p(char s) { std::cout << s ; }
-void p(char* s) { std::cout << s ; }
-void p(const char* s) { std::cout << s ; }
-void p(size_t s) { std::cout << s ; }
-void pln() { std::cout << '\n' ; }
-void pln(char s) { std::cout << s << "\n" ; }
-void pln(char* s) { std::cout << s << "\n" ; }
-void pln(const char* s) { std::cout << s << "\n" ; }
-void pln(size_t s) { std::cout << s << "\n" ; }
-void pln(bool s) { std::cout << s << "\n" ; }
-void pln(std::string s) { std::cout << s << "\n" ; }
-// ====================================================================================================
 
 size_t get_file_size(char* path) {
     FILE* file = fopen(path, "rb");
@@ -72,30 +57,31 @@ void print_console(char* file_path, size_t from, size_t len, size_t print_col_ty
         if (from > file_size) {
             from = file_size;
         }
-        //TODO CRISTIAN TOD ODIERVYERTHINB
-        if (len > file_size) {
-            len = file_size;
-        }
-        
+
         // TODO: Make this
         SoR* sor_struct = new SoR(file_path, from, len);
-        if (print_col_type_index >= sor_struct->get_column_size())  {
-            print_col_type_index = sor_struct->get_column_size() - 1;
-        }
-        sor_struct->get_row_size();
+        sor_struct->print();
         // sor_struct->get_column_types(file_path, from, len);
 
         // 2. print column type option
         // 3. print column index element
         // 4. print if element is missing
         if (print_col_type_index != SIZE_MAX) {
-            sor_struct->print_column_type(print_col_type_index);
+            if (print_col_type_index >= sor_struct->get_column_size())  {
+                print_col_type_index = sor_struct->get_column_size() - 1;
+            }
+            enum_type column_type = sor_struct->get_col_type(print_col_type_index);
+            cout << "Column Type at " << print_col_type_index << ": " << get_enum_string(column_type) << '\n';
         }
-        else if (print_col_index_x != SIZE_MAX && print_col_index_y != SIZE_MAX) {
+        if (print_col_index_x != SIZE_MAX && print_col_index_y != SIZE_MAX) {
             // TODO: use the column function to print this
+            string element = sor_struct->get(print_col_index_x, print_col_index_y);
+            cout << "Element at " << print_col_index_x << ", " << print_col_index_y << ": " << element << '\n';
         }
-        else if (is_missing_index_x != SIZE_MAX && is_missing_index_y != SIZE_MAX) {
+        if (is_missing_index_x != SIZE_MAX && is_missing_index_y != SIZE_MAX) {
             // TODO: use the column function to print this
+            bool is_missing = sor_struct->is_missing(is_missing_index_x, is_missing_index_y);
+            cout << "Is element missing at " << is_missing_index_x << ", " << is_missing_index_y << ": " << is_missing << '\n';
         }
     }
     else {
@@ -150,17 +136,6 @@ int main(int argh, char** argv) {
             // Currently, we're deciding to ignore everything that isn't one of our argument flags.
         }
     }
-    // TODO: Make sure to get rid of all this later =====================================================
-    Cout* c = new Cout();
-    if (file_path) { c->p("-f: \"")->p(file_path)->pln("\""); }
-    if (from != 0) { c->p("-from: \"")->p(from)->pln("\""); }
-    if (len != SIZE_MAX) { c->p("-len: \"")->p(len)->pln("\""); }
-    if (print_col_type_index != SIZE_MAX) { c->p("-print_col_type: \"")->p(print_col_type_index)->pln("\""); }
-    if (print_col_index_x != SIZE_MAX && print_col_index_y != SIZE_MAX) 
-        c->p("-print_col_idx: \"")->p(print_col_index_x)->p("\", \"")->p(print_col_index_y)->pln("\"");
-    if (is_missing_index_x != SIZE_MAX && is_missing_index_y != SIZE_MAX) 
-        c->p("-is_missing_idx: \"")->p(is_missing_index_x)->p("\", \"")->p(is_missing_index_y)->pln("\"");
-    // ==================================================================================================
 
 
     cout << "TESTING!!!\n";

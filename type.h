@@ -7,34 +7,29 @@ using namespace std;
 
 enum enum_type {INTEGER, FLOAT, BOOL, STRING, EMPTY};
 
-void print_enum(enum_type enum_type) {
+string get_enum_string(enum_type enum_type) {
     switch (enum_type) {
         case INTEGER:
-            cout << "INTEGER\n";
-            break;
+            return "INTEGER";
         case FLOAT:
-            cout << "FLOAT\n";
-            break;
+            return "FLOAT";
         case BOOL:
-            cout << "BOOL\n";
-            break;
+            return "BOOL";
         case STRING:
-            cout << "STRING\n";
-            break;
+            return "STRING";
         case EMPTY:
-            cout << "EMPTY\n";
-            break;
-        default:
+            return "EMPTY";
+        default: {
             cout << "ERROR: UNKNOWN ENUM - " << enum_type << '\n';
+            return "ERROR";
+        }
     }
 }
 
 class Type {
     public:
 
-    string to_string() {
-        return "";
-    }
+    virtual string to_string() { return ""; }
 
     bool empty() {
         return false;

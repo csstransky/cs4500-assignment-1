@@ -76,14 +76,16 @@ class SoR {
             // move to from position
             in_file.seekg(from, ios_base::beg);
 
-            // move until new line
-            while(!in_file.eof() && end_byte > in_file.tellg()) {
-                in_file >> noskipws >> file_char;
-                if (file_char == '\n') {
-                    break;
+            if (from > 0) {
+                // move until new line
+                while(!in_file.eof() && end_byte > in_file.tellg()) {
+                    in_file >> noskipws >> file_char;
+                    if (file_char == '\n') {
+                        break;
+                    }
                 }
             }
-            
+           
             while(!in_file.eof() && end_byte > in_file.tellg()) {
                 in_file >> noskipws >> file_char;
                 switch (file_char) {
@@ -267,7 +269,7 @@ class SoR {
         // TODO return thisng 
         cout << "------------LARGEST ENUM TYPES------------\n";
         for(size_t ii = 0; ii < column_types.size(); ii++) {
-            print_enum(column_types.at(ii)); 
+            cout << get_enum_string(column_types.at(ii)) << '\n';
         }
         cout << "------------------------------------------\n";
         return column_types;
@@ -300,6 +302,7 @@ class SoR {
                 c->add(to_type(enum_type, element));
             }
             else {
+                cout << "CRAZYZYZYYZYZY: " << element << '\n';
                 // We will treat elements that do not follow their types as Empty elements
                 // Example: Column = <INT>, Element = <"hello">, this will be recorded as <>
                 c->add(new Empty());
@@ -309,7 +312,7 @@ class SoR {
         // rest of the space of the row empty. 
         // Ex: cols = <STRING><STRING><BOOL><STRING>, strings = "hi", "bye", output=<hi><bye><><>
         for (int jj = i; jj < cols.size(); jj++) {
-            Column* c = cols.at(i);
+            Column* c = cols.at(jj);
             c->add(new Empty());
         }
     }
@@ -346,9 +349,13 @@ class SoR {
         return cols.at(x)->is_missing(y);
     }
 
-    void print_column_type(size_t print_col_type_index) {
-        enum_type column_type = get_col_type(print_col_type_index);
-        cout << "Column Type at " << print_col_type_index << ": " << column_type << '\n';
-        print_enum(column_type);
+    void print() {
+        string print_string;
+        for (size_t ii = 0; ii < get_row_size(); ii++) {
+            for (size_t jj = 0; jj < get_column_size(); jj++) {
+                cout << '<' << get(jj, ii) << "> ";
+            }
+            cout << '\n';
+        }
     }
 };
