@@ -276,6 +276,15 @@ class SoR {
         }
     }
 
+    void check_for_all_missing() {
+        for (int i = 0; i < this->cols.size(); i++) {
+            Column* c = cols.at(i);
+            if (c->get_type == EMPTY) {
+                c->set_type(BOOL);
+            }
+        }
+    }
+
     public:
 
     SoR() {
@@ -291,6 +300,10 @@ class SoR {
 
         // parse again to add each element
         parse_and_add(file_path, from, len);
+
+        // get if any columns contain all missings. If so, set the column to BOOL since that is the
+        // default column type detailed in the assignment
+        check_for_all_missing();
     }
 
     ~SoR() {
