@@ -281,7 +281,7 @@ class SoR {
         // BOOL because it is not a STRING, INTEGER, or FLOAT. EMPTY column_type is NOT allowed.
         for (int i = 0; i < this->cols.size(); i++) {
             Column* c = cols.at(i);
-            if (c->get_type == EMPTY) {
+            if (c->get_type() == EMPTY) {
                 c->set_type(BOOL);
             }
         }
