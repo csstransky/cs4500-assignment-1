@@ -32,7 +32,9 @@ void print_enum(enum_type enum_type) {
 class Type {
     public:
 
-    virtual string to_string();
+    string to_string() {
+        return "";
+    }
 
     bool empty() {
         return false;

@@ -24,7 +24,7 @@ void pln(bool s) { std::cout << s << "\n" ; }
 void pln(std::string s) { std::cout << s << "\n" ; }
 // ====================================================================================================
 
-size_t file_size(char* path) {
+size_t get_file_size(char* path) {
     FILE* file = fopen(path, "rb");
     fseek(file, 0L, SEEK_END); // goes to the end of the file
     size_t file_size = ftell(file); // gets the size
@@ -68,16 +68,28 @@ void print_console(char* file_path, size_t from, size_t len, size_t print_col_ty
                     size_t is_missing_index_x, size_t is_missing_index_y) {
     // Correctly set up all values
     if (file_path) {
+        size_t file_size = get_file_size(file_path);
+        if (from > file_size) {
+            from = file_size;
+        }
+        //TODO CRISTIAN TOD ODIERVYERTHINB
+        if (len > file_size) {
+            len = file_size;
+        }
         
         // TODO: Make this
-        SoR* sor_struct = new SoR();
-        sor_struct->get_column_types(file_path);
+        SoR* sor_struct = new SoR(file_path, from, len);
+        if (print_col_type_index >= sor_struct->get_column_size())  {
+            print_col_type_index = sor_struct->get_column_size() - 1;
+        }
+        sor_struct->get_row_size();
+        // sor_struct->get_column_types(file_path, from, len);
 
         // 2. print column type option
         // 3. print column index element
         // 4. print if element is missing
         if (print_col_type_index != SIZE_MAX) {
-            // TODO: use the column function to print this
+            sor_struct->print_column_type(print_col_type_index);
         }
         else if (print_col_index_x != SIZE_MAX && print_col_index_y != SIZE_MAX) {
             // TODO: use the column function to print this

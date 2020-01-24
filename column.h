@@ -27,12 +27,20 @@ class Column {
         elements.push_back(s);
     }
 
+    size_t size() {
+        return elements.size();
+    }
+
     Type* get(size_t i) {
         return elements.at(i);
     }
 
-    enum_type getType() {
+    enum_type get_type() {
         return col_type;
+    }
+
+    void set_type(enum_type enum_type) {
+        col_type = enum_type;
     }
 
     bool is_missing(size_t i) {

@@ -15,24 +15,24 @@ class SoR {
     private:
     vector<Column*> cols;
 
-
     Type* to_type(enum_type t, string s) {
-        if (t == INTEGER) {
-            return new Integer(stoi(s));
-        } 
-        else if (t == BOOL) {
-            bool b;
-            istringstream("1") >> b;
-            return new Boolean(b);
-        } 
-        else if (t == FLOAT) {
-            return new Float(stof(s));
-        } 
-        else if (s.length() > 0) {
-            return new String(s);
-        } 
-        else {
-            return new Empty();
+        switch (t) {
+            case INTEGER:
+                return new Integer(stoi(s));
+            case BOOL: {
+                bool b = stoi(s) == 1;
+                return new Boolean(b);
+            }
+            case FLOAT:
+                return new Float(stof(s));
+            case STRING:
+                return new String(s);
+            case EMPTY:
+                return new Empty();
+            default: {
+                cout << "ERROR: UNRECOGNIZED ENUM TYPE: \"" << t << "\"\n";
+                return new Empty();
+            }
         }
     }
 
@@ -146,6 +146,10 @@ class SoR {
 
         // parse again to add each element
         parse_and_add(file_path, from, len);
+    }
+
+    ~SoR() {
+
     }
 
     enum_type get_column_enum_type(string line_string) {
@@ -269,36 +273,44 @@ class SoR {
         return column_types;
     }
 
-    ~SoR() {
-
-    }
-
     void add_col(Column* col) {
         cols.push_back(col);
     }
 
     void add_line(vector<string> line) {
-        for (int i = 0; i < line.size(); i++) {
+        int i;
+        for (i = 0; i < line.size(); i++) {
             Column* c = cols.at(i);
             string element = line.at(i);
-            if (c->getType() == BOOL && is_file_boolean(element)) {
+            if (c->get_type() == BOOL && is_file_boolean(element)) {
                 c->add(to_type(BOOL, element));
             } 
-            else if (c->getType() == FLOAT && is_file_float(element)) {
+            else if (c->get_type() == FLOAT && is_file_float(element)) {
+                c->add(to_type(FLOAT, element));
             } 
-            else if (c->getType() == INTEGER && is_file_int(element)) {
+            else if (c->get_type() == INTEGER && is_file_int(element)) {
                 c->add(to_type(INTEGER, element));
-            // TODO: Fix this if bad things happen
             } 
-            else if (c->getType() == STRING && is_file_string(element)) {
+            else if (c->get_type() == STRING && is_file_string(element)) {
                 c->add(to_type(STRING, element));
             } 
-            // TODO: Cristian sjutfj
+            else if (c->get_type() == EMPTY) {
+                enum_type enum_type = get_column_enum_type(element);
+                c->set_type(enum_type);
+                c->add(to_type(enum_type, element));
+            }
             else {
                 // We will treat elements that do not follow their types as Empty elements
                 // Example: Column = <INT>, Element = <"hello">, this will be recorded as <>
                 c->add(new Empty());
             }
+        }
+        // If the line of strings has less strings than the column_type size, we want to make the 
+        // rest of the space of the row empty. 
+        // Ex: cols = <STRING><STRING><BOOL><STRING>, strings = "hi", "bye", output=<hi><bye><><>
+        for (int jj = i; jj < cols.size(); jj++) {
+            Column* c = cols.at(i);
+            c->add(new Empty());
         }
     }
 
@@ -313,12 +325,30 @@ class SoR {
         return cols.at(x)->get(y)->to_string();
     }
 
+    size_t get_column_size() {
+        return cols.size();
+    }
+
+    size_t get_row_size() {
+        if (cols.size() > 0) {
+            return cols.at(0)->size();
+        }
+        else {
+            return 0;
+        }
+    }
+
     enum_type get_col_type(size_t x) {
-        return cols.at(x)->getType();
+        return cols.at(x)->get_type();
     }
 
     bool is_missing(size_t x, size_t y) {
         return cols.at(x)->is_missing(y);
     }
 
+    void print_column_type(size_t print_col_type_index) {
+        enum_type column_type = get_col_type(print_col_type_index);
+        cout << "Column Type at " << print_col_type_index << ": " << column_type << '\n';
+        print_enum(column_type);
+    }
 };
