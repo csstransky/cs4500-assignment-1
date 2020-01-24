@@ -276,7 +276,9 @@ class SoR {
         }
     }
 
-    void check_for_all_missing() {
+    void set_empty_columns() {
+        // As per the assignment, if a column is completely empty, then the column type will be a 
+        // BOOL because it is not a STRING, INTEGER, or FLOAT. EMPTY column_type is NOT allowed.
         for (int i = 0; i < this->cols.size(); i++) {
             Column* c = cols.at(i);
             if (c->get_type == EMPTY) {
@@ -301,9 +303,14 @@ class SoR {
         // parse again to add each element
         parse_and_add(file_path, from, len);
 
-        // get if any columns contain all missings. If so, set the column to BOOL since that is the
-        // default column type detailed in the assignment
-        check_for_all_missing();
+        // Will set any leftover EMPTY column to a BOOL, because the assignment says that a column
+        // can only be of a type STRING, INTEGER, FLOAT, & BOOL, and if a column is not a STRING,
+        // INTEGER, or FLOAT, then it defaults to a BOOL
+        // Input:   <sting> <> <>
+        //          <hi> <there> <>
+        // column_types: <STRING> <STRING> <EMPTY>
+        // new_column_types: <STRING> <STRING> <BOOL>
+        set_empty_columns();
     }
 
     ~SoR() {
