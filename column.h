@@ -47,10 +47,4 @@ class Column {
         return elements.at(i)->empty();
     }
 
-    void remove_last() {
-        elements.pop_back();
-    }
-
-
-
 };

@@ -15,6 +15,140 @@ class SoR {
     private:
     vector<Column*> cols;
 
+    void add_line(vector<string> line) {
+        int i;
+        for (i = 0; i < line.size(); i++) {
+            Column* c = cols.at(i);
+            string element = line.at(i);
+            if (c->get_type() == BOOL && is_file_boolean(element)) {
+                c->add(to_type(BOOL, element));
+            } 
+            else if (c->get_type() == FLOAT && is_file_float(element)) {
+                c->add(to_type(FLOAT, element));
+            } 
+            else if (c->get_type() == INTEGER && is_file_int(element)) {
+                c->add(to_type(INTEGER, element));
+            } 
+            else if (c->get_type() == STRING && is_file_string(element)) {
+                c->add(to_type(STRING, element));
+            } 
+            else if (c->get_type() == EMPTY) {
+                enum_type enum_type = get_enum_type(element);
+                c->set_type(enum_type);
+                c->add(to_type(enum_type, element));
+            }
+            else {
+                // We will treat elements that do not follow their types as Empty elements
+                // Example: Column = <INT>, Element = <"hello">, this will be recorded as <>
+                c->add(new Empty());
+            }
+        }
+        // If the line of strings has less strings than the column_type size, we want to make the 
+        // rest of the space of the row empty. 
+        // Ex: cols = <STRING><STRING><BOOL><STRING>, strings = "hi", "bye", output=<hi><bye><><>
+        for (int jj = i; jj < cols.size(); jj++) {
+            Column* c = cols.at(jj);
+            c->add(new Empty());
+        }
+    }
+
+    enum_type get_enum_type(string line_string) {
+        if (is_file_boolean(line_string)) {
+            return BOOL;
+        } 
+        else if (is_file_float(line_string)) {
+            return FLOAT;
+        }
+        else if (is_file_int(line_string)) {
+            return INTEGER;
+        }
+        else if (is_file_string(line_string)) {
+            return STRING;
+        }
+        else {
+            return EMPTY;
+        }
+    }
+
+    vector<enum_type> convert_strings_to_column_types(vector<string> column_strings) {
+        vector<enum_type> column_types;
+        for (size_t ii = 0; ii < column_strings.size(); ii++) {
+            enum_type col_enum = get_enum_type(column_strings[ii]);
+            column_types.push_back(col_enum);
+        }
+        return column_types;
+    }
+
+    vector<enum_type> get_column_types(char* file_path) {
+        vector<enum_type> column_types;
+        ifstream in_file;
+        in_file.open(file_path);
+        if (in_file.is_open()) {
+            string file_line_string;
+            char file_char;
+            bool is_record = false;
+            bool is_quotes = false;
+            size_t max_column_size = 0;
+            size_t current_column_size = 0;
+            vector<string> max_column_strings;
+            vector<string> current_column_strings;
+            int num_lines = 0;
+
+            while(!in_file.eof() && num_lines < 500) {
+                in_file >> noskipws >> file_char;
+                switch (file_char) {
+                    case ' ':
+                        if (is_quotes && is_record) {
+                            file_line_string += file_char;
+                        }
+                        break;
+                    case '\n':
+                        if (max_column_size < current_column_size) {
+                            max_column_size = current_column_size;
+                            max_column_strings = current_column_strings;
+                        }
+                        current_column_strings.clear();
+                        current_column_size = 0;
+                        num_lines++;
+                        break;
+                    case '\"':
+                        if (is_record) {
+                            is_quotes = !is_quotes;
+                            file_line_string += file_char;
+                        }
+                        break;
+                    case '<':
+                        is_record = true;
+                        break;
+                    case '>':
+                        // I put this check here to make sure we have a pair of <>, to avoid the 
+                        // case of "> dude >", which in our case will completely ignore it
+                        if (is_record) {
+                            current_column_size++;
+                            current_column_strings.push_back(file_line_string);
+
+                            is_record = false;
+                            file_line_string.clear(); 
+                        }
+                        is_quotes = false;
+                        break;
+                    default:
+                        if (is_record) {
+                            file_line_string += file_char;
+                        }
+                }
+            }
+            in_file.close(); 
+            column_types = convert_strings_to_column_types(max_column_strings);
+            
+        }
+        else {
+            cout << "~ERROR: FILE NOT FOUND~\n";
+        }
+
+        return column_types;
+    }
+
     Type* to_type(enum_type t, string s) {
         switch (t) {
             case INTEGER:
@@ -61,7 +195,7 @@ class SoR {
     }
 
     void parse_and_add(char* file_path, size_t from, size_t len) {
-        // 1. Build the data structure using "from" and "len"
+        // Build the data structure using "from" and "len"
         ifstream in_file;
         in_file.open(file_path);
         if (in_file.is_open()) {
@@ -76,11 +210,13 @@ class SoR {
             // move to from position
             in_file.seekg(from, ios_base::beg);
 
-            // move until new line
-            while(!in_file.eof() && end_byte > in_file.tellg()) {
-                in_file >> noskipws >> file_char;
-                if (file_char == '\n') {
-                    break;
+            if (from > 0) {
+                // move until new line
+                while(!in_file.eof() && end_byte > in_file.tellg()) {
+                    in_file >> noskipws >> file_char;
+                    if (file_char == '\n') {
+                        break;
+                    }
                 }
             }
             
@@ -93,7 +229,6 @@ class SoR {
                         }
                         break;
                     case '\n':
-                        cout << "I AM A NEW LINE, HERE I AM.\n";
                         add_line(current_line);
                         current_line.clear();
                         break;
@@ -139,7 +274,7 @@ class SoR {
 
     SoR(char* file_path, size_t from, size_t len) {
         // get column types of the first 500 lines (using max column)
-        vector<enum_type> cols_types = get_column_types(file_path, from, len);
+        vector<enum_type> cols_types = get_column_types(file_path);
 
         // construct and add each column to cols
         construct_columns(cols_types);
@@ -150,175 +285,6 @@ class SoR {
 
     ~SoR() {
 
-    }
-
-    enum_type get_column_enum_type(string line_string) {
-        if (is_file_boolean(line_string)) {
-            return BOOL;
-        } 
-        else if (is_file_float(line_string)) {
-            return FLOAT;
-        }
-        else if (is_file_int(line_string)) {
-            return INTEGER;
-        }
-        else if (is_file_string(line_string)) {
-            return STRING;
-        }
-        else {
-            return EMPTY;
-        }
-    }
-
-    vector<enum_type> convert_strings_to_column_types(vector<string> column_strings) {
-        vector<enum_type> column_types;
-        for (size_t ii = 0; ii < column_strings.size(); ii++) {
-            enum_type col_enum = get_column_enum_type(column_strings[ii]);
-            column_types.push_back(col_enum);
-        }
-        return column_types;
-    }
-
-    vector<enum_type> get_column_types(char* file_path, size_t from , size_t len) {
-        vector<enum_type> column_types;
-        ifstream in_file;
-        in_file.open(file_path);
-        if (in_file.is_open()) {
-            string file_line_string;
-            char file_char;
-            bool is_record = false;
-            bool is_quotes = false;
-            size_t max_column_size = 0;
-            size_t current_column_size = 0;
-            vector<string> max_column_strings;
-            vector<string> current_column_strings;
-            size_t end_byte = from + len;
-                        
-            // move to from position
-            in_file.seekg(from, ios_base::beg);
-
-            // move until new line
-            while(!in_file.eof() && end_byte > in_file.tellg()) {
-                in_file >> noskipws >> file_char;
-                if (file_char == '\n') {
-                    break;
-                }
-            }
-
-
-            while(!in_file.eof() && end_byte > in_file.tellg()) {
-                in_file >> noskipws >> file_char;
-                switch (file_char) {
-                    case ' ':
-                        if (is_quotes && is_record) {
-                            file_line_string += file_char;
-                        }
-                        break;
-                    case '\n':
-                        cout << "=========----------==========\n";
-                        if (max_column_size < current_column_size) {
-                            cout << "FOUND LARGER: " << current_column_size << '\n';
-                            max_column_size = current_column_size;
-                            max_column_strings = current_column_strings;
-                        }
-                        current_column_strings.clear();
-                        current_column_size = 0;
-                        break;
-                    case '\"':
-                        if (is_record) {
-                            is_quotes = !is_quotes;
-                            file_line_string += file_char;
-                        }
-                        break;
-                    case '<':
-                        is_record = true;
-                        break;
-                    case '>':
-                        // I put this check here to make sure we have a pair of <>, to avoid the 
-                        // case of "> dude >", which in our case will completely ignore it
-                        if (is_record) {
-                            current_column_size++;
-                            current_column_strings.push_back(file_line_string);
-
-                            is_record = false;
-                            cout << file_line_string << '\n';
-                            file_line_string.clear(); 
-                        }
-                        is_quotes = false;
-                        break;
-                    default:
-                        if (is_record) {
-                            file_line_string += file_char;
-                        }
-                }
-            }
-            in_file.close(); 
-            cout << "------------LARGEST COLUMN ELEMENTS------------\n";
-            for(size_t ii = 0; ii < max_column_strings.size(); ii++) {
-                cout << '\"' << max_column_strings.at(ii) << "\"\n";
-            }
-            cout << "-----------------------------------------------\n";
-            column_types = convert_strings_to_column_types(max_column_strings);
-            
-        }
-        else {
-            cout << "~ERROR: FILE NOT FOUND~\n";
-        }
-        // TODO return thisng 
-        cout << "------------LARGEST ENUM TYPES------------\n";
-        for(size_t ii = 0; ii < column_types.size(); ii++) {
-            print_enum(column_types.at(ii)); 
-        }
-        cout << "------------------------------------------\n";
-        return column_types;
-    }
-
-    void add_col(Column* col) {
-        cols.push_back(col);
-    }
-
-    void add_line(vector<string> line) {
-        int i;
-        for (i = 0; i < line.size(); i++) {
-            Column* c = cols.at(i);
-            string element = line.at(i);
-            if (c->get_type() == BOOL && is_file_boolean(element)) {
-                c->add(to_type(BOOL, element));
-            } 
-            else if (c->get_type() == FLOAT && is_file_float(element)) {
-                c->add(to_type(FLOAT, element));
-            } 
-            else if (c->get_type() == INTEGER && is_file_int(element)) {
-                c->add(to_type(INTEGER, element));
-            } 
-            else if (c->get_type() == STRING && is_file_string(element)) {
-                c->add(to_type(STRING, element));
-            } 
-            else if (c->get_type() == EMPTY) {
-                enum_type enum_type = get_column_enum_type(element);
-                c->set_type(enum_type);
-                c->add(to_type(enum_type, element));
-            }
-            else {
-                // We will treat elements that do not follow their types as Empty elements
-                // Example: Column = <INT>, Element = <"hello">, this will be recorded as <>
-                c->add(new Empty());
-            }
-        }
-        // If the line of strings has less strings than the column_type size, we want to make the 
-        // rest of the space of the row empty. 
-        // Ex: cols = <STRING><STRING><BOOL><STRING>, strings = "hi", "bye", output=<hi><bye><><>
-        for (int jj = i; jj < cols.size(); jj++) {
-            Column* c = cols.at(i);
-            c->add(new Empty());
-        }
-    }
-
-    void delete_row(int start_col_index) {
-        // NOTE: deletes last row
-        for (int i = start_col_index; i >= 0; i--) {
-            cols.at(i)->remove_last();
-        }
     }
 
     string get(size_t x, size_t y) {
@@ -344,11 +310,5 @@ class SoR {
 
     bool is_missing(size_t x, size_t y) {
         return cols.at(x)->is_missing(y);
-    }
-
-    void print_column_type(size_t print_col_type_index) {
-        enum_type column_type = get_col_type(print_col_type_index);
-        cout << "Column Type at " << print_col_type_index << ": " << column_type << '\n';
-        print_enum(column_type);
     }
 };

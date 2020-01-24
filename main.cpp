@@ -89,7 +89,7 @@ void print_console(char* file_path, size_t from, size_t len, size_t print_col_ty
         // 3. print column index element
         // 4. print if element is missing
         if (print_col_type_index != SIZE_MAX) {
-            sor_struct->print_column_type(print_col_type_index);
+            print_enum(sor_struct->get_col_type(print_col_type_index));
         }
         else if (print_col_index_x != SIZE_MAX && print_col_index_y != SIZE_MAX) {
             // TODO: use the column function to print this
