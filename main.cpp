@@ -107,6 +107,7 @@ void print_console(char* file_path, size_t from, size_t len, size_t print_col_ty
         if (is_missing_index_x != SIZE_MAX && is_missing_index_y != SIZE_MAX) {
             print_is_missing_element(sor_struct, is_missing_index_x, is_missing_index_y);
         }
+        delete sor_struct;
     }
     else {
         cout << "No File Entered. Enter a file with: \n"
