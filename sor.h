@@ -314,7 +314,14 @@ class SoR {
     }
 
     ~SoR() {
-
+        for (int i = 0; i < this->cols.size(); i++) {
+            Column* c = cols.at(i);
+            for (int j = 0; j < c->size(); j++) {
+                Type* t = c->get(j);
+                delete t;
+            }
+            delete c;
+        }
     }
 
     string get(size_t x, size_t y) {

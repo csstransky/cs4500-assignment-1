@@ -29,6 +29,8 @@ string get_enum_string(enum_type enum_type) {
 class Type {
     public:
 
+    virtual ~Type() {}
+    
     virtual string to_string() { return ""; }
 
     virtual bool empty() { return false; }
