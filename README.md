@@ -38,6 +38,19 @@ the column using other rows (ex, the element in the next row is a string, so now
 column becomes a string column). If a column is found to contain all missings, the column is labeled  
 Boolean as it is the default type outlined in the assignment.   
 
+Example:
+```
+Columns after first file read:  INTEGER     BOOL    FLOAT   EMPTY   STRING  EMPTY
+File:                           <24>        <1>     <1.344> <>      <Hello> <>
+                                <103>       <dog>   <1.3>   <Hi>
+                                <23>        <0>     <12>    <1>
+
+Columns after constructing DF:  INTEGER     BOOL    FLOAT   STRING  STRING  BOOL
+DF output:                      24          1       1.344   -empty- Hello   -empty-
+                                103         -empty- 1.3     Hi      -empty- -empty-
+                                23          0       -empty- 1       -empty- -empty-
+```
+
 The program will then add values to the columns. The file is opened again and the file pointer is  
 moved to the -from byte. Next the file pointer is moved until it encounters a newline if the -from  
 command line argument is greater than 0 (meaning a -from flag has been chosen). The program will  
@@ -47,7 +60,7 @@ converted to empty values.
 
 Example:
 ```
-Column type: INTEGER STRING FLOAT BOOL STRING
+Column type: INTEGER STRING FLOAT BOOL BOOL
 input line : <7 9>   <"hi"> <2.3> <hi>
 conversion : <>      <"hi>  <2.3> <>   <>
 ```
